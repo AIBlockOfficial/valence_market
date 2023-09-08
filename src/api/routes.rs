@@ -1,9 +1,19 @@
-use crate::api::handlers::{listing_by_id_handler, listing_send_handler, listings_handler};
+use crate::api::handlers::{
+    listing_by_id_handler,
+    listing_send_handler,
+    listings_handler,
+    orders_by_id_handler,
+    orders_send_handler,
+};
 use crate::db::interfaces::DbConnectionWithMarket;
-use warp::{Filter, Rejection, Reply};
-use weaver_core::api::interfaces::{CFilterConnection, CacheConnection};
+use warp::{ Filter, Rejection, Reply };
+use weaver_core::api::interfaces::{ CFilterConnection, CacheConnection };
 use weaver_core::api::utils::{
-    get_cors, handle_rejection, map_api_res, post_cors, with_node_component,
+    get_cors,
+    handle_rejection,
+    map_api_res,
+    post_cors,
+    with_node_component,
 };
 
 // ========== LISTING ROUTES ========== //
@@ -19,7 +29,7 @@ use weaver_core::api::utils::{
 /// * `cuckoo_filter` - The cuckoo filter connection to use
 pub async fn listings(
     db: DbConnectionWithMarket,
-    cache: CacheConnection,
+    cache: CacheConnection
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path("listings")
         .and(warp::get())
@@ -42,9 +52,9 @@ pub async fn listings(
 pub async fn listing_by_id(
     db: DbConnectionWithMarket,
     cache: CacheConnection,
-    cuckoo_filter: CFilterConnection,
+    cuckoo_filter: CFilterConnection
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
-    warp::path!("listings")
+    warp::path("listings")
         .and(warp::get())
         .and(warp::path::param::<String>())
         .and(with_node_component(cache))
@@ -69,7 +79,7 @@ pub async fn listing_send(
     db: DbConnectionWithMarket,
     cache: CacheConnection,
     cuckoo_filter: CFilterConnection,
-    body_limit: u64,
+    body_limit: u64
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path!("listings" / "send")
         .and(warp::post())
@@ -97,9 +107,9 @@ pub async fn listing_send(
 pub async fn orders_by_id(
     db: DbConnectionWithMarket,
     cache: CacheConnection,
-    cuckoo_filter: CFilterConnection,
+    cuckoo_filter: CFilterConnection
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
-    warp::path!("orders")
+    warp::path("orders")
         .and(warp::get())
         .and(warp::path::param::<String>())
         .and(with_node_component(cache))
@@ -124,7 +134,7 @@ pub async fn orders_send(
     db: DbConnectionWithMarket,
     cache: CacheConnection,
     cuckoo_filter: CFilterConnection,
-    body_limit: u64,
+    body_limit: u64
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path!("orders" / "send")
         .and(warp::post())
