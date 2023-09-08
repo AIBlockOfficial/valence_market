@@ -1,14 +1,14 @@
 use crate::db::interfaces::DbConnectionWithMarket;
-use crate::db::traits::MarketDatabase;
 use crate::db::interfaces::Listing;
+use crate::db::traits::MarketDatabase;
 use weaver_core::api::errors::ApiErrorType;
 use weaver_core::api::interfaces::{CFilterConnection, CacheConnection};
 use weaver_core::api::responses::{json_serialize_embed, CallResponse, JsonReply};
 
 /// Handles retrieving all listings
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// * `db` - The database connection to use
 /// * `cache` - The cache connection to use
 pub async fn listings_handler(
@@ -32,9 +32,9 @@ pub async fn listings_handler(
 }
 
 /// Handles adding a listing to the database
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// * `payload` - The listing to add
 /// * `db` - The database connection to use
 /// * `cache` - The cache connection to use
@@ -49,11 +49,33 @@ pub async fn listing_send_handler(
     let mut db_lock = db.lock().await;
 
     match db_lock.add_listing(payload.clone()).await {
-        Ok(_) => {
-            r.into_ok("Listing added successfully", json_serialize_embed(payload))
-        }
-        Err(_) => {
-            r.into_err_internal(ApiErrorType::DBInsertionFailed)
-        }
+        Ok(_) => r.into_ok("Listing added successfully", json_serialize_embed(payload)),
+        Err(_) => r.into_err_internal(ApiErrorType::DBInsertionFailed),
+    }
+}
+
+/// Handles retrieving a listing by its ID
+///
+/// ### Arguments
+///
+/// * `id` - The ID of the listing to retrieve
+/// * `db` - The database connection to use
+/// * `cache` - The cache connection to use
+/// * `cf` - The cuckoo filter connection to use
+pub async fn listing_by_id_handler(
+    id: String,
+    db: DbConnectionWithMarket,
+    cache: CacheConnection,
+    cf: CFilterConnection,
+) -> Result<JsonReply, JsonReply> {
+    let r = CallResponse::new("listing_by_id");
+    let db_lock = db.lock().await;
+
+    match db_lock.get_listing_by_id(id).await {
+        Ok(listing) => r.into_ok(
+            "Listing retrieved successfully",
+            json_serialize_embed(listing),
+        ),
+        Err(_) => r.into_err_internal(ApiErrorType::DBInsertionFailed),
     }
 }
