@@ -1,6 +1,6 @@
-use std::cmp::min;
-use serde::{ Deserialize, Serialize };
 use crate::utils::construct_druid;
+use serde::{Deserialize, Serialize};
+use std::cmp::min;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PendingTrade {
@@ -116,13 +116,17 @@ impl OrderBook {
     }
 
     /// Inserts an order into the order book at the correct index
-    /// 
+    ///
     /// ### Arguments
-    /// 
+    ///
     /// * `order` - The order to be inserted
     /// * `is_bid` - Whether the order is a bid or not
     fn insert_order_in_list(&mut self, order: Order, is_bid: bool) {
-        let order_list = if is_bid { &mut self.bids } else { &mut self.asks };
+        let order_list = if is_bid {
+            &mut self.bids
+        } else {
+            &mut self.asks
+        };
         let search_idx = find_index_for_order(order_list, &order.price);
         let idx = if order_list[search_idx].price > order.price && is_bid {
             search_idx + 1

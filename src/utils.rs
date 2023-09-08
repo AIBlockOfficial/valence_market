@@ -1,5 +1,5 @@
-use rand::Rng;
 use crate::constants::{DRUID_CHARSET, DRUID_LENGTH};
+use rand::Rng;
 
 /// Constructs a 16 byte DRUID string
 pub fn construct_druid() -> String {
