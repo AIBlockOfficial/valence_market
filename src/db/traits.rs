@@ -32,9 +32,9 @@ impl MarketDatabase for MongoDbConnWithMarket {
         let filter = doc! {};
 
         // Find all documents in the collection and deserialize them into Listing objects
-        let cursor = match collection.find(filter, None).await {
+        let mut cursor = match collection.find(filter, None).await {
             Ok(cursor) => cursor,
-            Err(e) => {
+            Err(_) => {
                 return Err(construct_result_error(
                     "Couldn't fetch documents from DB",
                     "listings",
@@ -45,7 +45,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
         while let Ok(true) = cursor.advance().await {
             let listing: Listing = match cursor.deserialize_current() {
                 Ok(listing) => listing,
-                Err(e) => {
+                Err(_) => {
                     return Err(construct_result_error(
                         "Couldn't deserialize listing",
                         "listings",
@@ -66,7 +66,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
         // Serialize the new listing to BSON
         let bson_new_listing = match to_bson(&listing) {
             Ok(bson) => bson,
-            Err(e) => {
+            Err(_) => {
                 return Err(construct_result_error(
                     "Couldn't serialize listing for storage",
                     "listings",
@@ -77,7 +77,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
         // Insert the BSON document into the collection
         match collection.insert_one(bson_new_listing, None).await {
             Ok(_) => Ok(()),
-            Err(e) => Err(construct_result_error(
+            Err(_) => Err(construct_result_error(
                 "Couldn't insert listing into DB",
                 "listings",
             )),

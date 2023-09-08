@@ -1,4 +1,7 @@
-use crate::api::handlers::listings_handler;
+use crate::api::handlers::{
+    listings_handler,
+    listing_send_handler,
+};
 use crate::db::interfaces::DbConnectionWithMarket;
 use warp::{ Filter, Rejection, Reply };
 use weaver_core::api::interfaces::{ CFilterConnection, CacheConnection };
@@ -24,14 +27,12 @@ use weaver_core::api::utils::{
 pub async fn listings(
     db: DbConnectionWithMarket,
     cache: CacheConnection,
-    cuckoo_filter: CFilterConnection
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path("listings")
         .and(warp::get())
         .and(with_node_component(cache))
         .and(with_node_component(db))
-        .and(with_node_component(cuckoo_filter))
-        .and_then(move |cache, db, cf| map_api_res(listings_handler(db, cache, cf)))
+        .and_then(move |cache, db| map_api_res(listings_handler(db, cache)))
         .recover(handle_rejection)
         .with(get_cors())
 }
@@ -59,7 +60,7 @@ pub async fn listing_send(
         .and(with_node_component(cache))
         .and(with_node_component(db))
         .and(with_node_component(cuckoo_filter))
-        .and_then(move |data, cache, db, cf| map_api_res(listing_send_handler(db, cache, cf)))
+        .and_then(move |data, cache, db, cf| map_api_res(listing_send_handler(data, db, cache, cf)))
         .recover(handle_rejection)
         .with(post_cors())
 }
