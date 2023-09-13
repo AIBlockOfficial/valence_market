@@ -57,7 +57,7 @@ pub trait MarketDatabase {
 impl MarketDatabase for MongoDbConnWithMarket {
     async fn get_listings(&self) -> Result<Vec<Listing>, ApiError> {
         let db = self.inner.client.database(MARKET_DB_NAME);
-        let collection: Collection<Listing> = db.collection(&MARKET_COLL_NAME);
+        let collection: Collection<Listing> = db.collection(MARKET_COLL_NAME);
         let mut asset_listings: Vec<Listing> = Vec::new();
 
         // Define a filter (empty document) to retrieve all documents in the collection
@@ -94,7 +94,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
     async fn add_listing(&mut self, listing: Listing) -> Result<(), ApiError> {
         let db = self.inner.client.database(MARKET_DB_NAME);
         let collection = db.collection(MARKET_COLL_NAME);
-        let ob_id = listing._id.clone();
+        let ob_id = listing._id;
 
         // Insert the BSON document into the collection
         let _listing_addition = match collection.insert_one(listing, None).await {
@@ -124,7 +124,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
 
     async fn get_listing_by_id(&self, id: String) -> Result<Listing, ApiError> {
         let db = self.inner.client.database(MARKET_DB_NAME);
-        let collection: Collection<Listing> = db.collection(&MARKET_COLL_NAME);
+        let collection: Collection<Listing> = db.collection(MARKET_COLL_NAME);
         let filter = doc! { "_id": construct_mongodb_object_id(id) };
 
         // Retrieve the listing from the database using the filter
@@ -149,7 +149,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
 
     async fn get_orders_by_id(&self, id: String) -> Result<OrderBook, ApiError> {
         let db = self.inner.client.database(MARKET_DB_NAME);
-        let collection: Collection<MongoDbOrderBook> = db.collection(&MARKET_COLL_NAME_ORDERS);
+        let collection: Collection<MongoDbOrderBook> = db.collection(MARKET_COLL_NAME_ORDERS);
         let filter = doc! { "_id": construct_mongodb_object_id(id) };
 
         // Retrieve the orderbook from the database using the filter
@@ -174,7 +174,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
 
     async fn add_order(&mut self, order: Order) -> Result<(), ApiError> {
         let db = self.inner.client.database(MARKET_DB_NAME);
-        let collection: Collection<MongoDbOrderBook> = db.collection(&MARKET_COLL_NAME_ORDERS);
+        let collection: Collection<MongoDbOrderBook> = db.collection(MARKET_COLL_NAME_ORDERS);
         let filter = doc! { "_id": construct_mongodb_object_id(order.asset_address.clone()) };
 
         // Retrieve the orderbook from the database using the filter
@@ -216,7 +216,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
 
     async fn get_pending_trades_by_id(&self, id: String) -> Result<Vec<PendingTrade>, ApiError> {
         let db = self.inner.client.database(MARKET_DB_NAME);
-        let collection: Collection<MongoDbOrderBook> = db.collection(&MARKET_COLL_NAME_ORDERS);
+        let collection: Collection<MongoDbOrderBook> = db.collection(MARKET_COLL_NAME_ORDERS);
         let filter = doc! { "_id": construct_mongodb_object_id(id) };
 
         // Retrieve the orderbook from the database using the filter

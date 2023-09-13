@@ -14,14 +14,14 @@ use weaver_core::api::responses::{json_serialize_embed, CallResponse, JsonReply}
 /// * `cache` - The cache connection to use
 pub async fn listings_handler(
     db: DbConnectionWithMarket,
-    cache: CacheConnection,
+    _cache: CacheConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("listings");
     let db_lock = db.lock().await;
 
     let listings = match db_lock.get_listings().await {
         Ok(listings) => listings,
-        Err(e) => {
+        Err(_e) => {
             return r.into_err_internal(ApiErrorType::DBInsertionFailed);
         }
     };
@@ -43,8 +43,8 @@ pub async fn listings_handler(
 pub async fn listing_send_handler(
     payload: Listing,
     db: DbConnectionWithMarket,
-    cache: CacheConnection,
-    cf: CFilterConnection,
+    _cache: CacheConnection,
+    _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("listing_send");
     let mut db_lock = db.lock().await;
@@ -66,8 +66,8 @@ pub async fn listing_send_handler(
 pub async fn listing_by_id_handler(
     id: String,
     db: DbConnectionWithMarket,
-    cache: CacheConnection,
-    cf: CFilterConnection,
+    _cache: CacheConnection,
+    _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("listing_by_id");
     let db_lock = db.lock().await;
@@ -92,8 +92,8 @@ pub async fn listing_by_id_handler(
 pub async fn orders_by_id_handler(
     id: String,
     db: DbConnectionWithMarket,
-    cache: CacheConnection,
-    cf: CFilterConnection,
+    _cache: CacheConnection,
+    _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("orders_by_id");
     let db_lock = db.lock().await;
@@ -118,8 +118,8 @@ pub async fn orders_by_id_handler(
 pub async fn orders_pending_handler(
     id: String,
     db: DbConnectionWithMarket,
-    cache: CacheConnection,
-    cf: CFilterConnection,
+    _cache: CacheConnection,
+    _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("orders_pending");
     let db_lock = db.lock().await;
@@ -144,8 +144,8 @@ pub async fn orders_pending_handler(
 pub async fn orders_send_handler(
     payload: Order,
     db: DbConnectionWithMarket,
-    cache: CacheConnection,
-    cf: CFilterConnection,
+    _cache: CacheConnection,
+    _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("orders_send");
     let mut db_lock = db.lock().await;

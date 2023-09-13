@@ -73,7 +73,8 @@ impl OrderBook {
     /// * `order` - The order to be added
     pub fn add_order(&mut self, order: Order) {
         if order.is_bid {
-            self.match_bid(&mut order.clone());
+            let mut match_order = order;
+            self.match_bid(&mut match_order);
         } else {
             self.insert_order_in_list(order, false);
         }
