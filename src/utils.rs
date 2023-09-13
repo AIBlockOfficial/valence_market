@@ -1,5 +1,7 @@
 use crate::constants::{DRUID_CHARSET, DRUID_LENGTH};
+use mongodb::bson::oid::ObjectId;
 use rand::Rng;
+use std::str::FromStr;
 
 /// Constructs a 16 byte DRUID string
 pub fn construct_druid() -> String {
@@ -12,4 +14,11 @@ pub fn construct_druid() -> String {
         .collect();
 
     random_string
+}
+
+pub fn construct_mongodb_object_id(id: String) -> ObjectId {
+    match ObjectId::from_str(&id) {
+        Ok(object_id) => object_id,
+        Err(_) => ObjectId::new(),
+    }
 }

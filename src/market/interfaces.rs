@@ -2,7 +2,7 @@ use crate::utils::construct_druid;
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PendingTrade {
     pub bid_id: String,
     pub ask_id: String,
@@ -12,7 +12,7 @@ pub struct PendingTrade {
     pub druid: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Order {
     pub id: String,
     pub asset_address: String,
@@ -24,7 +24,7 @@ pub struct Order {
     pub desired_asset_address: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OrderBook {
     pub bids: Vec<Order>,
     pub asks: Vec<Order>,
