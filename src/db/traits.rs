@@ -1,7 +1,7 @@
 use crate::constants::{MARKET_COLL_NAME, MARKET_DB_NAME, MARKET_COLL_NAME_ORDERS};
 use crate::db::interfaces::{Listing, MongoDbConnWithMarket, MongoDbOrderBook};
 use crate::utils::construct_mongodb_object_id;
-use crate::market::interfaces::{Order, OrderBook};
+use crate::market::interfaces::{Order, OrderBook, PendingTrade};
 use async_trait::async_trait;
 use mongodb::bson::doc;
 use mongodb::Collection;
@@ -43,6 +43,13 @@ pub trait MarketDatabase {
     /// * `id` - The ID of the listing to add the order to
     /// * `order` - The order to add
     async fn add_order(&mut self, order: Order) -> Result<(), ApiError>;
+
+    /// Gets all pending trades for a listing from the database by its ID
+    /// 
+    /// ### Arguments
+    /// 
+    /// * `id` - The ID of the listing to retrieve
+    async fn get_pending_trades_by_id(&self, id: String) -> Result<Vec<PendingTrade>, ApiError>;
     
 }
 
@@ -191,6 +198,31 @@ impl MarketDatabase for MongoDbConnWithMarket {
                         )),
                     }
                 },
+                None => {
+                    return Err(construct_result_error(
+                        "Couldn't find orderbook with given ID",
+                        "listings",
+                    ));
+                }
+            },
+            Err(_) => {
+                return Err(construct_result_error(
+                    "Couldn't fetch orderbook from DB",
+                    "listings",
+                ));
+            }
+        }
+    }
+
+    async fn get_pending_trades_by_id(&self, id: String) -> Result<Vec<PendingTrade>, ApiError> {
+        let db = self.inner.client.database(MARKET_DB_NAME);
+        let collection: Collection<MongoDbOrderBook> = db.collection(&MARKET_COLL_NAME_ORDERS);
+        let filter = doc! { "_id": construct_mongodb_object_id(id) };
+
+        // Retrieve the orderbook from the database using the filter
+        match collection.find_one(filter, None).await {
+            Ok(ob) => match ob {
+                Some(ob) => Ok(ob.order_book.pending_trades),
                 None => {
                     return Err(construct_result_error(
                         "Couldn't find orderbook with given ID",

@@ -107,6 +107,32 @@ pub async fn orders_by_id_handler(
     }
 }
 
+/// Handles retrieving pending trades by their listing ID
+/// 
+/// ### Arguments
+/// 
+/// * `id` - The ID of the listing to retrieve pending trades for
+/// * `db` - The database connection to use
+/// * `cache` - The cache connection to use
+/// * `cf` - The cuckoo filter connection to use
+pub async fn orders_pending_handler(
+    id: String,
+    db: DbConnectionWithMarket,
+    cache: CacheConnection,
+    cf: CFilterConnection,
+) -> Result<JsonReply, JsonReply> {
+    let r = CallResponse::new("orders_pending");
+    let db_lock = db.lock().await;
+
+    match db_lock.get_pending_trades_by_id(id).await {
+        Ok(pending_trades) => r.into_ok(
+            "Pending trades retrieved successfully",
+            json_serialize_embed(pending_trades),
+        ),
+        Err(_) => r.into_err_internal(ApiErrorType::DBInsertionFailed),
+    }
+}
+
 /// Handles adding an order to the database
 /// 
 /// ### Arguments
