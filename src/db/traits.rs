@@ -1,7 +1,7 @@
 use crate::constants::{MARKET_COLL_NAME, MARKET_DB_NAME, MARKET_COLL_NAME_ORDERS};
-use crate::db::interfaces::{Listing, MongoDbConnWithMarket, MongoDbOrderBook};
+use crate::db::interfaces::{MongoDbConnWithMarket, MongoDbOrderBook};
 use crate::utils::construct_mongodb_object_id;
-use crate::market::interfaces::{Order, OrderBook, PendingTrade};
+use crate::market::interfaces::{Listing, Order, OrderBook, PendingTrade};
 use async_trait::async_trait;
 use mongodb::bson::doc;
 use mongodb::Collection;
@@ -20,7 +20,7 @@ pub trait MarketDatabase {
     /// ### Arguments
     ///
     /// * `listing` - The listing to add
-    async fn add_listing(&mut self, listing: Listing) -> Result<(), ApiError>;
+    async fn add_listing(&self, listing: Listing) -> Result<(), ApiError>;
 
     /// Gets a listing from the database by its ID
     /// 
@@ -42,7 +42,7 @@ pub trait MarketDatabase {
     /// 
     /// * `id` - The ID of the listing to add the order to
     /// * `order` - The order to add
-    async fn add_order(&mut self, order: Order) -> Result<(), ApiError>;
+    async fn add_order(&self, order: Order) -> Result<(), ApiError>;
 
     /// Gets all pending trades for a listing from the database by its ID
     /// 
@@ -56,7 +56,8 @@ pub trait MarketDatabase {
 #[async_trait]
 impl MarketDatabase for MongoDbConnWithMarket {
     async fn get_listings(&self) -> Result<Vec<Listing>, ApiError> {
-        let db = self.inner.client.database(MARKET_DB_NAME);
+        let db_lock = self.inner.lock().await;
+        let db = db_lock.client.database(MARKET_DB_NAME);
         let collection: Collection<Listing> = db.collection(MARKET_COLL_NAME);
         let mut asset_listings: Vec<Listing> = Vec::new();
 
@@ -91,8 +92,9 @@ impl MarketDatabase for MongoDbConnWithMarket {
         Ok(asset_listings)
     }
 
-    async fn add_listing(&mut self, listing: Listing) -> Result<(), ApiError> {
-        let db = self.inner.client.database(MARKET_DB_NAME);
+    async fn add_listing(&self, listing: Listing) -> Result<(), ApiError> {
+        let db_lock = self.inner.lock().await;
+        let db = db_lock.client.database(MARKET_DB_NAME);
         let collection = db.collection(MARKET_COLL_NAME);
         let ob_id = listing._id;
 
@@ -123,7 +125,8 @@ impl MarketDatabase for MongoDbConnWithMarket {
     }
 
     async fn get_listing_by_id(&self, id: String) -> Result<Listing, ApiError> {
-        let db = self.inner.client.database(MARKET_DB_NAME);
+        let db_lock = self.inner.lock().await;
+        let db = db_lock.client.database(MARKET_DB_NAME);
         let collection: Collection<Listing> = db.collection(MARKET_COLL_NAME);
         let filter = doc! { "_id": construct_mongodb_object_id(id) };
 
@@ -148,7 +151,8 @@ impl MarketDatabase for MongoDbConnWithMarket {
     }
 
     async fn get_orders_by_id(&self, id: String) -> Result<OrderBook, ApiError> {
-        let db = self.inner.client.database(MARKET_DB_NAME);
+        let db_lock = self.inner.lock().await;
+        let db = db_lock.client.database(MARKET_DB_NAME);
         let collection: Collection<MongoDbOrderBook> = db.collection(MARKET_COLL_NAME_ORDERS);
         let filter = doc! { "_id": construct_mongodb_object_id(id) };
 
@@ -172,16 +176,17 @@ impl MarketDatabase for MongoDbConnWithMarket {
         }
     }
 
-    async fn add_order(&mut self, order: Order) -> Result<(), ApiError> {
-        let db = self.inner.client.database(MARKET_DB_NAME);
+    async fn add_order(&self, order: Order) -> Result<(), ApiError> {
+        let db_lock = self.inner.lock().await;
+        let db = db_lock.client.database(MARKET_DB_NAME);
         let collection: Collection<MongoDbOrderBook> = db.collection(MARKET_COLL_NAME_ORDERS);
-        let filter = doc! { "_id": construct_mongodb_object_id(order.asset_address.clone()) };
+        let filter = doc! { "_id": construct_mongodb_object_id(order.listing_id.clone()) };
 
         // Retrieve the orderbook from the database using the filter
         match collection.find_one(filter.clone(), None).await {
             Ok(ob) => match ob {
                 Some(mut ob) => {
-                    let address = order.asset_address.clone();
+                    let address = order.listing_id.clone();
 
                     ob.order_book.add_order(order);
                     let new_orderbook = MongoDbOrderBook {
@@ -215,7 +220,8 @@ impl MarketDatabase for MongoDbConnWithMarket {
     }
 
     async fn get_pending_trades_by_id(&self, id: String) -> Result<Vec<PendingTrade>, ApiError> {
-        let db = self.inner.client.database(MARKET_DB_NAME);
+        let db_lock = self.inner.lock().await;
+        let db = db_lock.client.database(MARKET_DB_NAME);
         let collection: Collection<MongoDbOrderBook> = db.collection(MARKET_COLL_NAME_ORDERS);
         let filter = doc! { "_id": construct_mongodb_object_id(id) };
 

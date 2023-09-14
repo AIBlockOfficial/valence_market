@@ -5,15 +5,6 @@ use weaver_core::db::mongo_db::MongoDbConn;
 use mongodb::bson::oid::ObjectId;
 use crate::market::interfaces::OrderBook;
 
-/// An asset listing on the market
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Listing {
-    pub _id: ObjectId,
-    pub title: String,
-    pub description: String,
-    pub price: f64,
-}
-
 /// A MongoDB document wrapper for an asset listing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MongoDbOrderBook {
@@ -24,7 +15,7 @@ pub struct MongoDbOrderBook {
 /// Trait wrapper struct for a MongoDB connection that stores market data
 #[derive(Debug, Clone)]
 pub struct MongoDbConnWithMarket {
-    pub inner: MongoDbConn,
+    pub inner: Arc<Mutex<MongoDbConn>>,
 }
 
 impl MongoDbConnWithMarket {
@@ -33,9 +24,7 @@ impl MongoDbConnWithMarket {
     /// ### Arguments
     ///
     /// * `inner` - The MongoDB connection to wrap
-    pub fn new(inner: MongoDbConn) -> Self {
+    pub fn new(inner: Arc<Mutex<MongoDbConn>>) -> Self {
         Self { inner }
     }
 }
-
-pub type DbConnectionWithMarket = Arc<Mutex<MongoDbConnWithMarket>>;

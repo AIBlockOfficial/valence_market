@@ -1,6 +1,16 @@
 use crate::utils::construct_druid;
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
+use mongodb::bson::oid::ObjectId;
+
+/// An asset listing on the market
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Listing {
+    pub _id: ObjectId,
+    pub title: String,
+    pub description: String,
+    pub price: f64,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PendingTrade {
@@ -15,13 +25,13 @@ pub struct PendingTrade {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Order {
     pub id: String,
-    pub asset_address: String,
+    pub listing_id: String,
     pub price: f64,
     pub quantity: u64,
     pub is_bid: bool,
     pub created_at: String,
     pub druid: String,
-    pub desired_asset_address: Option<String>,
+    pub desired_listing_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -38,11 +48,19 @@ pub struct OrderBook {
 /// * `prices` - A list of current orders
 /// * `price` - The price of the order to be inserted
 pub fn find_index_for_order(prices: &mut Vec<Order>, price: &f64) -> usize {
+    // If there are no orders, return 0
+    if prices.len() == 0 { return 0; }
+
     let mut left = 0;
     let mut right = prices.len() - 1;
 
     while left <= right {
         let mid = (left + right) / 2;
+
+        println!("left: {:?}", left);
+        println!("right: {:?}", right);
+        println!("mid: {:?}", mid);
+        println!("prices[mid]: {:?}", prices[mid]);
         let mid_price = &prices[mid].price;
 
         if mid_price == price {
@@ -129,10 +147,14 @@ impl OrderBook {
             &mut self.asks
         };
         let search_idx = find_index_for_order(order_list, &order.price);
-        let idx = if order_list[search_idx].price > order.price && is_bid {
-            search_idx + 1
-        } else {
-            search_idx - 1
+
+        let idx = match search_idx {
+            0 => 0,
+            _ => if order_list[search_idx].price > order.price && is_bid {
+                search_idx + 1
+            } else {
+                search_idx - 1
+            }
         };
 
         order_list.insert(idx, order);

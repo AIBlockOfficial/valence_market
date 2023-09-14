@@ -1,7 +1,6 @@
-use crate::db::interfaces::DbConnectionWithMarket;
-use crate::db::interfaces::Listing;
+use crate::db::interfaces::MongoDbConnWithMarket;
+use crate::market::interfaces::{Listing, Order};
 use crate::db::traits::MarketDatabase;
-use crate::market::interfaces::Order;
 use weaver_core::api::errors::ApiErrorType;
 use weaver_core::api::interfaces::{CFilterConnection, CacheConnection};
 use weaver_core::api::responses::{json_serialize_embed, CallResponse, JsonReply};
@@ -13,13 +12,12 @@ use weaver_core::api::responses::{json_serialize_embed, CallResponse, JsonReply}
 /// * `db` - The database connection to use
 /// * `cache` - The cache connection to use
 pub async fn listings_handler(
-    db: DbConnectionWithMarket,
+    db: MongoDbConnWithMarket,
     _cache: CacheConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("listings");
-    let db_lock = db.lock().await;
-
-    let listings = match db_lock.get_listings().await {
+    
+    let listings = match db.get_listings().await {
         Ok(listings) => listings,
         Err(_e) => {
             return r.into_err_internal(ApiErrorType::DBInsertionFailed);
@@ -42,14 +40,13 @@ pub async fn listings_handler(
 /// * `cf` - The cuckoo filter connection to use
 pub async fn listing_send_handler(
     payload: Listing,
-    db: DbConnectionWithMarket,
+    db: MongoDbConnWithMarket,
     _cache: CacheConnection,
     _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("listing_send");
-    let mut db_lock = db.lock().await;
-
-    match db_lock.add_listing(payload.clone()).await {
+    
+    match db.add_listing(payload.clone()).await {
         Ok(_) => r.into_ok("Listing added successfully", json_serialize_embed(payload)),
         Err(_) => r.into_err_internal(ApiErrorType::DBInsertionFailed),
     }
@@ -65,14 +62,13 @@ pub async fn listing_send_handler(
 /// * `cf` - The cuckoo filter connection to use
 pub async fn listing_by_id_handler(
     id: String,
-    db: DbConnectionWithMarket,
+    db: MongoDbConnWithMarket,
     _cache: CacheConnection,
     _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("listing_by_id");
-    let db_lock = db.lock().await;
-
-    match db_lock.get_listing_by_id(id).await {
+    
+    match db.get_listing_by_id(id).await {
         Ok(listing) => r.into_ok(
             "Listing retrieved successfully",
             json_serialize_embed(listing),
@@ -91,14 +87,13 @@ pub async fn listing_by_id_handler(
 /// * `cf` - The cuckoo filter connection to use
 pub async fn orders_by_id_handler(
     id: String,
-    db: DbConnectionWithMarket,
+    db: MongoDbConnWithMarket,
     _cache: CacheConnection,
     _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("orders_by_id");
-    let db_lock = db.lock().await;
-
-    match db_lock.get_orders_by_id(id).await {
+    
+    match db.get_orders_by_id(id).await {
         Ok(orders) => r.into_ok(
             "Orders retrieved successfully",
             json_serialize_embed(orders),
@@ -117,14 +112,13 @@ pub async fn orders_by_id_handler(
 /// * `cf` - The cuckoo filter connection to use
 pub async fn orders_pending_handler(
     id: String,
-    db: DbConnectionWithMarket,
+    db: MongoDbConnWithMarket,
     _cache: CacheConnection,
     _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("orders_pending");
-    let db_lock = db.lock().await;
-
-    match db_lock.get_pending_trades_by_id(id).await {
+    
+    match db.get_pending_trades_by_id(id).await {
         Ok(pending_trades) => r.into_ok(
             "Pending trades retrieved successfully",
             json_serialize_embed(pending_trades),
@@ -143,14 +137,13 @@ pub async fn orders_pending_handler(
 /// * `cf` - The cuckoo filter connection to use
 pub async fn orders_send_handler(
     payload: Order,
-    db: DbConnectionWithMarket,
+    db: MongoDbConnWithMarket,
     _cache: CacheConnection,
     _cf: CFilterConnection,
 ) -> Result<JsonReply, JsonReply> {
     let r = CallResponse::new("orders_send");
-    let mut db_lock = db.lock().await;
-
-    match db_lock.add_order(payload.clone()).await {
+    
+    match db.add_order(payload.clone()).await {
         Ok(_) => r.into_ok("Order added successfully", json_serialize_embed(payload)),
         Err(_) => r.into_err_internal(ApiErrorType::DBInsertionFailed),
     }
