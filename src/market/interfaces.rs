@@ -9,7 +9,8 @@ pub struct Listing {
     pub _id: ObjectId,
     pub title: String,
     pub description: String,
-    pub price: f64,
+    pub initial_price: f64,
+    pub quantity: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
