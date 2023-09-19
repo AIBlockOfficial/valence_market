@@ -20,7 +20,7 @@
   </div> -->
 
   <p align="center">
-    `weaver_market` is a plug-in for <a href="https://github.com/ABlockOfficial/Weaver">Weaver</a> that lets you set up a web3 marketplace in seconds. Let your users buy and sell assets in a distributed marketplace, where the only fees are the ones you set, and your users are in control of their own trades.
+    <code>weaver_market</code> is a plug-in for <a href="https://github.com/ABlockOfficial/Weaver">Weaver</a> that lets you set up a web3 marketplace in seconds. Let your users buy and sell assets in a distributed marketplace, where the only fees are the ones you set, and your users are in control of their own trades.
     <br />
     <br />
     <a href="https://a-block.io"><strong>Official documentation »</strong></a>
@@ -61,8 +61,12 @@ weaver_market = "0.1.0"
 #### **<img src="https://img.shields.io/badge/GET-2176FF" alt="GET"/> `/listings`**
 Retrieve a list of available assets that users can browse and potentially buy
 
+..
+
 #### **<img src="https://img.shields.io/badge/GET-2176FF" alt="GET"/> `/listings/:id`**
 Retrieve a specific listing by its ID
+
+..
 
 #### **<img src="https://img.shields.io/badge/POST-07BEB8" alt="POST"/> `/listings`**
 Create a new listing. The structure for the request body will need to follow the `Listing` interface, which looks like:
@@ -77,8 +81,12 @@ Create a new listing. The structure for the request body will need to follow the
 }
 ```
 
+..
+
 #### **<img src="https://img.shields.io/badge/GET-2176FF" alt="GET"/> `/orders/:id`**
 Retrieve a list of orders that have been placed, retrieved by the listing ID
+
+..
 
 #### **<img src="https://img.shields.io/badge/POST-07BEB8" alt="POST"/> `/orders`**
 Create a new order. The structure for the request body will need to follow the `Order` interface, which looks like:
