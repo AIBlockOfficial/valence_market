@@ -188,7 +188,7 @@ impl MarketDatabase for MongoDbConnWithMarket {
                 Some(mut ob) => {
                     let address = order.listing_id.clone();
 
-                    ob.order_book.add_order(order);
+                    ob.order_book.add_order(&mut order.clone());
                     let new_orderbook = MongoDbOrderBook {
                         _id: construct_mongodb_object_id(address),
                         order_book: ob.order_book,

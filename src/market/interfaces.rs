@@ -1,6 +1,5 @@
 use crate::utils::construct_druid;
-use serde::{Deserialize, Serialize};
-use std::cmp::min;
+use serde::{ Deserialize, Serialize };
 use mongodb::bson::oid::ObjectId;
 
 /// An asset listing on the market
@@ -10,14 +9,14 @@ pub struct Listing {
     pub title: String,
     pub description: String,
     pub initial_price: f64,
-    pub quantity: u64,
+    pub quantity: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PendingTrade {
     pub bid_id: String,
     pub ask_id: String,
-    pub quantity: u64,
+    pub quantity: f64,
     pub price: f64,
     pub created_at: String,
     pub druid: String,
@@ -28,10 +27,10 @@ pub struct Order {
     pub id: String,
     pub listing_id: String,
     pub price: f64,
-    pub quantity: u64,
+    pub quantity: f64,
     pub is_bid: bool,
     pub created_at: String,
-    pub druid: String,
+    pub druid: Option<String>,
     pub desired_listing_id: Option<String>,
 }
 
@@ -50,18 +49,15 @@ pub struct OrderBook {
 /// * `price` - The price of the order to be inserted
 pub fn find_index_for_order(prices: &mut Vec<Order>, price: &f64) -> usize {
     // If there are no orders, return 0
-    if prices.len() == 0 { return 0; }
+    if prices.len() == 0 {
+        return 0;
+    }
 
     let mut left = 0;
     let mut right = prices.len() - 1;
 
     while left <= right {
         let mid = (left + right) / 2;
-
-        println!("left: {:?}", left);
-        println!("right: {:?}", right);
-        println!("mid: {:?}", mid);
-        println!("prices[mid]: {:?}", prices[mid]);
         let mid_price = &prices[mid].price;
 
         if mid_price == price {
@@ -85,54 +81,68 @@ impl OrderBook {
         }
     }
 
-    /// Adds an order to the order book
+    /// Matches an order with the lowest ask/highest bid, if possible. If not possible,
+    /// the order is added to the order book
     ///
     /// ### Arguments
     ///
-    /// * `order` - The order to be added
-    pub fn add_order(&mut self, order: Order) {
-        if order.is_bid {
-            let mut match_order = order;
-            self.match_bid(&mut match_order);
-        } else {
-            self.insert_order_in_list(order, false);
+    /// * `order` - The order to be matched
+    pub fn add_order(&mut self, order: &mut Order) {
+        let match_list = if order.is_bid { &mut self.asks } else { &mut self.bids };
+        let mut empty_orders = vec![Vec::<usize>::new(), Vec::<usize>::new()];
+        let mut match_idx = 0;
+
+        // Base case, where we're dealing with an empty orderbook
+        if match_list.len() == 0 {
+            self.insert_order_in_list(order.clone());
+            return;
         }
-    }
 
-    /// Matches a bid with the lowest ask, if possible. If not possible,
-    /// the bid is added to the order book
-    ///
-    /// ### Arguments
-    ///
-    /// * `bid` - The bid to be matched
-    pub fn match_bid(&mut self, bid: &mut Order) {
-        let mut ask_idx = 0;
+        // The match order/list is the opposite side of the trade from the order.
+        // If the order is a bid, then the match order will be an ask
+        while match_idx < match_list.len() && order.quantity > 0.0 {
+            let match_order = &match_list[match_idx];
 
-        while ask_idx < self.asks.len() {
-            let ask = &self.asks[ask_idx];
-
-            if ask.price <= bid.price {
-                let quantity = min(ask.quantity, bid.quantity);
+            if
+                (order.is_bid && match_order.price <= order.price) ||
+                (!order.is_bid && match_order.price >= order.price)
+            {
+                let quantity = match_order.quantity.min(order.quantity);
+                let bid_id = if order.is_bid { order.id.clone() } else { match_order.id.clone() };
+                let ask_id = if !order.is_bid { order.id.clone() } else { match_order.id.clone() };
                 let pending_trade = PendingTrade {
-                    bid_id: bid.id.clone(),
-                    ask_id: ask.id.clone(),
+                    bid_id,
+                    ask_id,
                     quantity,
-                    price: ask.price,
+                    price: match_order.price.min(order.price),
                     created_at: String::from(""),
                     druid: construct_druid(),
                 };
 
+                // Handle pending trades and current orders
                 self.pending_trades.push(pending_trade);
-                self.asks[ask_idx].quantity -= quantity;
-                bid.quantity -= quantity;
+                match_list[match_idx].quantity -= quantity;
+                order.quantity -= quantity;
 
-                self.clean_up_empty_orders(&Some(ask_idx), &None);
-                ask_idx += 1;
+                // Add empty orders to the list for later clean up
+                if match_list[match_idx].quantity == 0.0 {
+                    if order.is_bid {
+                        empty_orders[0].push(match_idx);
+                    } else {
+                        empty_orders[1].push(match_idx);
+                    }
+                }
+
+                // Carry on to the next order
+                match_idx += 1;
+
             } else {
-                self.insert_order_in_list(bid.clone(), true);
+                self.insert_order_in_list(order.clone());
                 break;
             }
         }
+
+        self.clean_up_empty_orders(empty_orders);
     }
 
     /// Inserts an order into the order book at the correct index
@@ -140,18 +150,13 @@ impl OrderBook {
     /// ### Arguments
     ///
     /// * `order` - The order to be inserted
-    /// * `is_bid` - Whether the order is a bid or not
-    fn insert_order_in_list(&mut self, order: Order, is_bid: bool) {
-        let order_list = if is_bid {
-            &mut self.bids
-        } else {
-            &mut self.asks
-        };
+    fn insert_order_in_list(&mut self, order: Order) {
+        let order_list = if order.is_bid { &mut self.bids } else { &mut self.asks };
         let search_idx = find_index_for_order(order_list, &order.price);
 
         let idx = match search_idx {
             0 => 0,
-            _ => if order_list[search_idx].price > order.price && is_bid {
+            _ => if order_list[search_idx].price > order.price && order.is_bid {
                 search_idx + 1
             } else {
                 search_idx - 1
@@ -165,17 +170,16 @@ impl OrderBook {
     ///
     /// ### Arguments
     ///
-    /// * `ask_idx` - The index of the ask to be removed
-    /// * `bid_idx` - The index of the bid to be removed
-    fn clean_up_empty_orders(&mut self, ask_idx: &Option<usize>, bid_idx: &Option<usize>) {
-        if ask_idx.is_some() && self.asks[ask_idx.unwrap()].quantity == 0 {
-            let idx = ask_idx.unwrap();
-            self.asks.remove(idx);
-        }
+    /// * `empty_orders_list` - A list of indices for empty orders. A vector of 2 vectors, where 
+    /// the first vector is for asks and the second vector is for bids
+    fn clean_up_empty_orders(&mut self, empty_orders_list: Vec<Vec<usize>>) {
+        empty_orders_list[0].iter().for_each(|idx| {
+            self.asks.remove(*idx);
+        });
 
-        if bid_idx.is_some() && self.bids[bid_idx.unwrap()].quantity == 0 {
-            self.bids.remove(bid_idx.unwrap());
-        }
+        empty_orders_list[1].iter().for_each(|idx| {
+            self.bids.remove(*idx);
+        });
     }
 }
 
@@ -187,4 +191,143 @@ pub struct Asset {
     pub total_supply: u64,
     pub highest_bid: Option<String>,
     pub lowest_ask: Option<String>,
+}
+
+//------------- TESTS -------------//
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_simple_bid(price: f64, quantity: f64) -> Order {
+        Order {
+            id: String::from("1"),
+            listing_id: String::from("1"),
+            price,
+            quantity,
+            is_bid: true,
+            created_at: String::from(""),
+            druid: None,
+            desired_listing_id: None,
+        }
+    }
+
+    fn create_simple_ask(price: f64, quantity: f64) -> Order {
+        Order {
+            id: String::from("1"),
+            listing_id: String::from("1"),
+            price,
+            quantity,
+            is_bid: false,
+            created_at: String::from(""),
+            druid: None,
+            desired_listing_id: None,
+        }
+    }
+
+    #[test]
+    fn should_add_first_order() {
+        //
+        // Arrange
+        //
+        let mut order_book = OrderBook::new();
+        let mut order = create_simple_bid(1.0, 1.0);
+
+        //
+        // Act
+        //
+        order_book.add_order(&mut order);
+
+        //
+        // Assert
+        //
+        assert_eq!(order_book.bids.len(), 1);
+        assert_eq!(order_book.bids[0].price, 1.0);
+        assert_eq!(order_book.bids[0].id, String::from("1"));
+    }
+
+    #[test]
+    fn should_match_bid_to_ask() {
+        //
+        // Arrange
+        //
+        let mut order_book = OrderBook::new();
+        let mut ask = create_simple_ask(1.5, 10.0);
+        let mut bid = create_simple_bid(2.0, 3.0);
+
+        // 
+        // Act
+        //
+        order_book.add_order(&mut ask);
+        order_book.add_order(&mut bid);
+
+        // 
+        // Assert
+        //
+        assert_eq!(order_book.bids.len(), 0);
+        assert_eq!(order_book.asks.len(), 1);
+        assert_eq!(order_book.asks[0].quantity, 7.0);
+        assert_eq!(order_book.pending_trades.len(), 1);
+        assert_eq!(order_book.pending_trades[0].quantity, 3.0);
+        assert_eq!(order_book.pending_trades[0].price, 1.5);
+        assert_eq!(order_book.pending_trades[0].bid_id, String::from("1"));
+        assert_eq!(order_book.pending_trades[0].ask_id, String::from("1"));
+        assert!(order_book.pending_trades[0].druid.len() > 0);
+    }
+
+    #[test]
+    fn should_match_ask_to_bid() {
+        //
+        // Arrange
+        //
+        let mut order_book = OrderBook::new();
+        let mut bid = create_simple_bid(1.5, 10.0);
+        let mut ask = create_simple_ask(1.0, 3.0);
+
+        //
+        // Act
+        //
+        order_book.add_order(&mut bid);
+        order_book.add_order(&mut ask);
+
+        //
+        // Assert
+        //
+        assert_eq!(order_book.bids.len(), 1);
+        assert_eq!(order_book.bids[0].quantity, 7.0);
+        assert_eq!(order_book.asks.len(), 0);
+        assert_eq!(order_book.pending_trades.len(), 1);
+        assert_eq!(order_book.pending_trades[0].quantity, 3.0);
+        assert_eq!(order_book.pending_trades[0].price, 1.0);
+        assert_eq!(order_book.pending_trades[0].bid_id, String::from("1"));
+        assert_eq!(order_book.pending_trades[0].ask_id, String::from("1"));
+        assert!(order_book.pending_trades[0].druid.len() > 0);
+    }
+
+    #[test]
+    fn should_handle_unmatched_orders() {
+        //
+        // Arrange
+        //
+        let mut order_book = OrderBook::new();
+        let mut bid = create_simple_bid(1.5, 10.0);
+        let mut ask = create_simple_ask(2.0, 3.0);
+
+        //
+        // Act
+        //
+        order_book.add_order(&mut bid);
+        order_book.add_order(&mut ask);
+
+        //
+        // Assert
+        //
+        assert_eq!(order_book.bids.len(), 1);
+        assert_eq!(order_book.bids[0].quantity, 10.0);
+        assert_eq!(order_book.bids[0].id, String::from("1"));
+        assert_eq!(order_book.asks.len(), 1);
+        assert_eq!(order_book.asks[0].quantity, 3.0);
+        assert_eq!(order_book.asks[0].id, String::from("1"));
+        assert_eq!(order_book.pending_trades.len(), 0);
+    }
 }
