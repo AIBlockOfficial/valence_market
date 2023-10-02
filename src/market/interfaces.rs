@@ -1,11 +1,10 @@
 use crate::utils::construct_druid;
-use serde::{ Deserialize, Serialize };
-use mongodb::bson::oid::ObjectId;
+use serde::{Deserialize, Serialize};
 
 /// An asset listing on the market
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Listing {
-    pub _id: ObjectId,
+    pub _id: String,
     pub title: String,
     pub description: String,
     pub initial_price: f64,
@@ -88,7 +87,11 @@ impl OrderBook {
     ///
     /// * `order` - The order to be matched
     pub fn add_order(&mut self, order: &mut Order) {
-        let match_list = if order.is_bid { &mut self.asks } else { &mut self.bids };
+        let match_list = if order.is_bid {
+            &mut self.asks
+        } else {
+            &mut self.bids
+        };
         let mut empty_orders = vec![Vec::<usize>::new(), Vec::<usize>::new()];
         let mut match_idx = 0;
 
@@ -103,13 +106,20 @@ impl OrderBook {
         while match_idx < match_list.len() && order.quantity > 0.0 {
             let match_order = &match_list[match_idx];
 
-            if
-                (order.is_bid && match_order.price <= order.price) ||
-                (!order.is_bid && match_order.price >= order.price)
+            if (order.is_bid && match_order.price <= order.price)
+                || (!order.is_bid && match_order.price >= order.price)
             {
                 let quantity = match_order.quantity.min(order.quantity);
-                let bid_id = if order.is_bid { order.id.clone() } else { match_order.id.clone() };
-                let ask_id = if !order.is_bid { order.id.clone() } else { match_order.id.clone() };
+                let bid_id = if order.is_bid {
+                    order.id.clone()
+                } else {
+                    match_order.id.clone()
+                };
+                let ask_id = if !order.is_bid {
+                    order.id.clone()
+                } else {
+                    match_order.id.clone()
+                };
                 let pending_trade = PendingTrade {
                     bid_id,
                     ask_id,
@@ -135,7 +145,6 @@ impl OrderBook {
 
                 // Carry on to the next order
                 match_idx += 1;
-
             } else {
                 self.insert_order_in_list(order.clone());
                 break;
@@ -151,15 +160,21 @@ impl OrderBook {
     ///
     /// * `order` - The order to be inserted
     fn insert_order_in_list(&mut self, order: Order) {
-        let order_list = if order.is_bid { &mut self.bids } else { &mut self.asks };
+        let order_list = if order.is_bid {
+            &mut self.bids
+        } else {
+            &mut self.asks
+        };
         let search_idx = find_index_for_order(order_list, &order.price);
 
         let idx = match search_idx {
             0 => 0,
-            _ => if order_list[search_idx].price > order.price && order.is_bid {
-                search_idx + 1
-            } else {
-                search_idx - 1
+            _ => {
+                if order_list[search_idx].price > order.price && order.is_bid {
+                    search_idx + 1
+                } else {
+                    search_idx - 1
+                }
             }
         };
 
@@ -170,7 +185,7 @@ impl OrderBook {
     ///
     /// ### Arguments
     ///
-    /// * `empty_orders_list` - A list of indices for empty orders. A vector of 2 vectors, where 
+    /// * `empty_orders_list` - A list of indices for empty orders. A vector of 2 vectors, where
     /// the first vector is for asks and the second vector is for bids
     fn clean_up_empty_orders(&mut self, empty_orders_list: Vec<Vec<usize>>) {
         empty_orders_list[0].iter().for_each(|idx| {
@@ -255,13 +270,13 @@ mod tests {
         let mut ask = create_simple_ask(1.5, 10.0);
         let mut bid = create_simple_bid(2.0, 3.0);
 
-        // 
+        //
         // Act
         //
         order_book.add_order(&mut ask);
         order_book.add_order(&mut bid);
 
-        // 
+        //
         // Assert
         //
         assert_eq!(order_book.bids.len(), 0);

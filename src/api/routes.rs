@@ -1,21 +1,15 @@
 use crate::api::handlers::{
-    listing_by_id_handler,
-    listing_send_handler,
-    listings_handler,
-    orders_by_id_handler,
-    orders_send_handler,
-    orders_pending_handler,
+    listing_by_id_handler, listing_send_handler, listings_handler, orders_by_id_handler,
+    orders_pending_handler, orders_send_handler,
 };
-use crate::db::interfaces::MongoDbConnWithMarket;
+use crate::db::traits::MarketDatabase;
 use crate::market::interfaces::Listing;
-use warp::{ Filter, Rejection, Reply };
-use weaver_core::api::interfaces::{ CFilterConnection, CacheConnection };
-use weaver_core::api::utils::{
-    get_cors,
-    map_api_res,
-    post_cors,
-    with_node_component,
-};
+use futures::lock::Mutex;
+use std::sync::Arc;
+use warp::{Filter, Rejection, Reply};
+use weaver_core::api::interfaces::CFilterConnection;
+use weaver_core::api::utils::{get_cors, map_api_res, post_cors, with_node_component};
+use weaver_core::db::handler::KvStoreConnection;
 
 // ========== LISTING ROUTES ========== //
 
@@ -28,9 +22,12 @@ use weaver_core::api::utils::{
 /// * `db` - The database connection to use
 /// * `cache` - The cache connection to use
 /// * `cuckoo_filter` - The cuckoo filter connection to use
-pub fn listings(
-    db: MongoDbConnWithMarket,
-    cache: CacheConnection
+pub fn listings<
+    D: MarketDatabase + Clone + Send + Sync + 'static,
+    C: KvStoreConnection + Clone + Send + Sync + 'static,
+>(
+    db: Arc<Mutex<D>>,
+    cache: Arc<Mutex<C>>,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path("listings")
         .and(warp::get())
@@ -49,10 +46,13 @@ pub fn listings(
 /// * `db` - The database connection to use
 /// * `cache` - The cache connection to use
 /// * `cuckoo_filter` - The cuckoo filter connection to use
-pub fn listing_by_id(
-    db: MongoDbConnWithMarket,
-    cache: CacheConnection,
-    cuckoo_filter: CFilterConnection
+pub fn listing_by_id<
+    D: MarketDatabase + Clone + Send + Sync + 'static,
+    C: KvStoreConnection + Clone + Send + Sync + 'static,
+>(
+    db: Arc<Mutex<D>>,
+    cache: Arc<Mutex<C>>,
+    cuckoo_filter: CFilterConnection,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path("listings")
         .and(warp::get())
@@ -72,13 +72,14 @@ pub fn listing_by_id(
 ///
 /// * `db` - The database connection to use
 /// * `cache` - The cache connection to use
-/// * `cuckoo_filter` - The cuckoo filter connection to use
 /// * `body_limit` - The maximum size of the request body
-pub fn listing_send(
-    db: MongoDbConnWithMarket,
-    cache: CacheConnection,
-    cuckoo_filter: CFilterConnection,
-    body_limit: u64
+pub fn listing_send<
+    D: MarketDatabase + Clone + Send + Sync + 'static,
+    C: KvStoreConnection + Clone + Send + Sync + 'static,
+>(
+    db: Arc<Mutex<D>>,
+    cache: Arc<Mutex<C>>,
+    body_limit: u64,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path("listings")
         .and(warp::post())
@@ -86,8 +87,9 @@ pub fn listing_send(
         .and(warp::body::json())
         .and(with_node_component(cache))
         .and(with_node_component(db))
-        .and(with_node_component(cuckoo_filter))
-        .and_then(move |data: Listing, cache, db, cf| map_api_res(listing_send_handler(data, db, cache, cf)))
+        .and_then(move |data: Listing, cache, db| {
+            map_api_res(listing_send_handler(data, db, cache))
+        })
         .with(post_cors())
 }
 
@@ -102,10 +104,13 @@ pub fn listing_send(
 /// * `db` - The database connection to use
 /// * `cache` - The cache connection to use
 /// * `cuckoo_filter` - The cuckoo filter connection to use
-pub fn orders_by_id(
-    db: MongoDbConnWithMarket,
-    cache: CacheConnection,
-    cuckoo_filter: CFilterConnection
+pub fn orders_by_id<
+    D: MarketDatabase + Clone + Send + Sync + 'static,
+    C: KvStoreConnection + Clone + Send + Sync + 'static,
+>(
+    db: Arc<Mutex<D>>,
+    cache: Arc<Mutex<C>>,
+    cuckoo_filter: CFilterConnection,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path("orders")
         .and(warp::get())
@@ -118,18 +123,21 @@ pub fn orders_by_id(
 }
 
 /// GET /orders/pending/{id}
-/// 
+///
 /// Retrieves all pending trades for a listing from the database by its ID
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// * `db` - The database connection to use
 /// * `cache` - The cache connection to use
 /// * `cf` - The cuckoo filter connection to use
-pub fn orders_pending(
-    db: MongoDbConnWithMarket,
-    cache: CacheConnection,
-    cuckoo_filter: CFilterConnection
+pub fn orders_pending<
+    D: MarketDatabase + Clone + Send + Sync + 'static,
+    C: KvStoreConnection + Clone + Send + Sync + 'static,
+>(
+    db: Arc<Mutex<D>>,
+    cache: Arc<Mutex<C>>,
+    cuckoo_filter: CFilterConnection,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path!("orders" / "pending")
         .and(warp::get())
@@ -151,11 +159,14 @@ pub fn orders_pending(
 /// * `cache` - The cache connection to use
 /// * `cuckoo_filter` - The cuckoo filter connection to use
 /// * `body_limit` - The maximum size of the request body
-pub fn orders_send(
-    db: MongoDbConnWithMarket,
-    cache: CacheConnection,
+pub fn orders_send<
+    D: MarketDatabase + Clone + Send + Sync + 'static,
+    C: KvStoreConnection + Clone + Send + Sync + 'static,
+>(
+    db: Arc<Mutex<D>>,
+    cache: Arc<Mutex<C>>,
     cuckoo_filter: CFilterConnection,
-    body_limit: u64
+    body_limit: u64,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::path("orders")
         .and(warp::post())
