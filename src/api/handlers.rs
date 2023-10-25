@@ -2,10 +2,10 @@ use crate::db::traits::MarketDatabase;
 use crate::market::interfaces::{Listing, Order};
 use futures::lock::Mutex;
 use std::sync::Arc;
-use weaver_core::api::errors::ApiErrorType;
-use weaver_core::api::interfaces::CFilterConnection;
-use weaver_core::api::responses::{json_serialize_embed, CallResponse, JsonReply};
-use weaver_core::db::handler::KvStoreConnection;
+use valence_core::api::errors::ApiErrorType;
+use valence_core::api::interfaces::CFilterConnection;
+use valence_core::api::responses::{json_serialize_embed, CallResponse, JsonReply};
+use valence_core::db::handler::KvStoreConnection;
 
 /// Handles retrieving all listings
 ///

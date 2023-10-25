@@ -2146,6 +2146,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "valence_core"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "cuckoofilter",
+ "futures",
+ "hex",
+ "mongodb",
+ "redis",
+ "ring",
+ "serde",
+ "serde_json",
+ "tracing",
+ "warp",
+]
+
+[[package]]
+name = "valence_market"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "futures",
+ "mongodb",
+ "rand 0.8.5",
+ "serde",
+ "valence_core",
+ "warp",
+]
+
+[[package]]
 name = "value-bag"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2280,37 +2311,6 @@ name = "wasm-bindgen-shared"
 version = "0.2.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca6ad05a4870b2bf5fe995117d3728437bd27d7cd5f06f13c17443ef369775a1"
-
-[[package]]
-name = "weaver_core"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cuckoofilter",
- "futures",
- "hex",
- "mongodb",
- "redis",
- "ring",
- "serde",
- "serde_json",
- "tracing",
- "warp",
-]
-
-[[package]]
-name = "weaver_market"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
- "futures",
- "mongodb",
- "rand 0.8.5",
- "serde",
- "warp",
- "weaver_core",
-]
 
 [[package]]
 name = "web-sys"

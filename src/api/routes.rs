@@ -7,9 +7,9 @@ use crate::market::interfaces::Listing;
 use futures::lock::Mutex;
 use std::sync::Arc;
 use warp::{Filter, Rejection, Reply};
-use weaver_core::api::interfaces::CFilterConnection;
-use weaver_core::api::utils::{get_cors, map_api_res, post_cors, with_node_component};
-use weaver_core::db::handler::KvStoreConnection;
+use valence_core::api::interfaces::CFilterConnection;
+use valence_core::api::utils::{get_cors, map_api_res, post_cors, with_node_component};
+use valence_core::db::handler::KvStoreConnection;
 
 // ========== LISTING ROUTES ========== //
 

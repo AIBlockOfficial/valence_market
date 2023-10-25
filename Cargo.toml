@@ -1,5 +1,5 @@
 [package]
-name = "weaver_market"
+name = "valence_market"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.73"
-weaver_core = { path = "../weaver_core" }
+valence_core = { path = "../valence_core" }
 mongodb = "2.6.1"
 rand = "0.8.5"
 serde = { version = "1.0.173", features=["derive"] }

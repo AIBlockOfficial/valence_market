@@ -3,7 +3,7 @@ use futures::lock::Mutex;
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use weaver_core::db::mongo_db::MongoDbConn;
+use valence_core::db::mongo_db::MongoDbConn;
 
 /// A MongoDB document wrapper for an asset listing
 #[derive(Debug, Clone, Serialize, Deserialize)]

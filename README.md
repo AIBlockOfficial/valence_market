@@ -7,12 +7,12 @@
     <div style="height: 50px; width: 100%"></div>
 
   <a>
-    <img src="https://github.com/ABlockOfficial/weaver_market/blob/main/assets/hero.svg" alt="Logo" width="320px">
+    <img src="https://github.com/ABlockOfficial/valence_market/blob/main/assets/hero.svg" alt="Logo" width="320px">
   </a>
 
   <div style="height: 50px; width: 100%"></div>
 
-  <h3>weaver_market</h3>
+  <h3>valence_market</h3>
 
   <!-- <div>
   <img src="https://img.shields.io/github/actions/workflow/status/Zenotta/Intercom/codeql-analysis.yml?branch=main" alt="Pipeline Status" />
@@ -20,7 +20,7 @@
   </div> -->
 
   <p align="center">
-    <code>weaver_market</code> is a plug-in for <a href="https://github.com/ABlockOfficial/Weaver">Weaver</a> that lets you set up a web3 marketplace in seconds. Let your users buy and sell assets in a distributed marketplace, where the only fees are the ones you set, and your users are in control of their own trades.
+    <code>valence_market</code> is a plug-in for <a href="https://github.com/ABlockOfficial/Valence">Valence</a> that lets you set up a web3 marketplace in seconds. Let your users buy and sell assets in a distributed marketplace, where the only fees are the ones you set, and your users are in control of their own trades.
     <br />
     <br />
     <a href="https://a-block.io"><strong>Official documentation »</strong></a>
@@ -33,7 +33,7 @@
 
 ## How to Use
 
-`weaver_market` provides routes that you can plug in to your base Weaver node to turn it into a fully functional marketplace. It is designed to be used as a library and can be imported into your Weaver project.
+`valence_market` provides routes that you can plug in to your base Valence node to turn it into a fully functional marketplace. It is designed to be used as a library and can be imported into your Valence project.
 
 ..
 
@@ -42,14 +42,14 @@
 If you have `cargo-add` installed, you can simply run the following command:
 
 ```sh
-cargo add weaver_market
+cargo add valence_market
 ```
 
 Otherwise, add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-weaver_market = "0.1.0"
+valence_market = "0.1.0"
 ```
 
 <p align="left">(<a href="#top">back to top</a>)</p>
@@ -111,7 +111,8 @@ Create a new order. The structure for the request body will need to follow the `
 ### 🚧 Further Work
 
 - [ ] Paginate orders
-- [ ] Add cache and cuckoo filter functionality
+- [ ] Add cache functionality
+- [ ] Add cuckoo filter functionality
 - [x] Separate ID from Listing and Order structs (create MongoDB wrapper struct with ID)
 - [x] Construct initial order when new listing is created (does this form part of the listing POST call?)
 - [ ] Add tests
