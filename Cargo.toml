@@ -2,6 +2,13 @@
 name = "valence_market"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+keywords = ["market", "marketplace", "blockchain", "L2", "P2P"]
+readme = "README.md"
+description = "Set up a web3 marketplace in seconds"
+homepage = "https://a-block.io"
+documentation = "https://a-block.io"
+repository = "https://github.com/ABlockOfficial/valence_market"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

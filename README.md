@@ -14,10 +14,8 @@
 
   <h3>valence_market</h3>
 
-  <!-- <div>
-  <img src="https://img.shields.io/github/actions/workflow/status/Zenotta/Intercom/codeql-analysis.yml?branch=main" alt="Pipeline Status" />
-    <img src="https://img.shields.io/github/package-json/v/Zenotta/Intercom" />
-  </div> -->
+<img src="https://img.shields.io/github/actions/workflow/status/ABlockOfficial/valence_market/.github/workflows/rust.yml?branch=main" alt="Pipeline Status" style="display:inline-block"/>
+<img src="https://img.shields.io/crates/v/valence_market" />
 
   <p align="center">
     <code>valence_market</code> is a plug-in for <a href="https://github.com/ABlockOfficial/Valence">Valence</a> that lets you set up a web3 marketplace in seconds. Let your users buy and sell assets in a distributed marketplace, where the only fees are the ones you set, and your users are in control of their own trades.
