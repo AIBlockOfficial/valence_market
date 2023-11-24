@@ -1,6 +1,6 @@
 [package]
 name = "valence_market"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 keywords = ["market", "marketplace", "blockchain", "L2", "P2P"]
@@ -14,7 +14,7 @@ repository = "https://github.com/ABlockOfficial/valence_market"
 
 [dependencies]
 async-trait = "0.1.73"
-valence_core = "0.1.0"
+valence_core = "0.1.1"
 mongodb = "2.6.1"
 rand = "0.8.5"
 serde = { version = "1.0.173", features=["derive"] }
